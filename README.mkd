@@ -1,0 +1,12 @@
+# Spatial organization of the mouse retina at single cell resolution
+
+This repository contains the code for the spatial atlas of the mouse retina.
+
+## File directories
+
+## Figures and tables
+
+## References
+
+Preprint: [Choi et al., bioRxiv 2022](https://doi.org/10.1101/2022.12.04.518972)
+
