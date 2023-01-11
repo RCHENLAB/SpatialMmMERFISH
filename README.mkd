@@ -5,10 +5,12 @@ This repository contains the codes used for the analzying the spatial transcript
 ## File directories
 
 1. Cell segmentation - merfish_segmentation.sh
+
 This python script is used to generate cell segmentation using cell membrane and nuclei staining images
 
 
-2. Spatial single cell analysis - merfish_singlecell.
+2. Spatial single cell analysis - spatial_singlecell_downstream_analysis.IPYNB
+
 This jupyter notebook page is used to generate the spatial count matrix of individual MERFISH experiment by assigning transcripts to segmented cells. With the generated count matrix, clustering analysis and major cell type annotation are also performed.
 
 
