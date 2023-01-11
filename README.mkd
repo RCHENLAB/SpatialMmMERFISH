@@ -1,10 +1,16 @@
 # Spatial organization of the mouse retina at single cell resolution
 
-This repository contains the code for the spatial atlas of the mouse retina.
+This repository contains the codes used for the analzying the spatial transcriptomics data of the mouse retina.
 
 ## File directories
 
-## Figures and tables
+1. Cell segmentation - merfish_segmentation.sh
+This python script is used to generate cell segmentation using cell membrane and nuclei staining images
+
+2. Spatial single cell analysis - merfish_singlecell.
+This jupyter notebook page is used to generate the spatial count matrix of individual MERFISH experiment by assigning transcripts to segmented cells. With the generated count matrix, clustering analysis and major cell type annotation are also performed.
+
+3. 
 
 ## References
 
