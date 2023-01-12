@@ -4,23 +4,23 @@ This repository contains the codes used for the analzying the spatial transcript
 
 ## File directories
 
-- Cell segmentation - merfish_segmentation.sh
+Cell segmentation - merfish_segmentation.sh
 
-This python script is used to generate cell segmentation using cell membrane and nuclei staining images
-
-
-
-
-- Spatial single cell analysis - spatial_singlecell_downstream_analysis.IPYNB
-
-This jupyter notebook page shows an example of how the spatial count matrix of individual MERFISH experiment is generated. Decoded transcripts are first assigned to segmented cells. The generated count matrix is used to perform downstream analysis such as clustering and major cell type annotation.
+- This python script is used to generate cell segmentation using cell membrane and nuclei staining images
 
 
 
 
-- Subtype annotation by co-embedding with reference scRNA-seq data - bindSC_coembedding_BC.R
+Spatial single cell analysis - spatial_singlecell_downstream_analysis.IPYNB
 
-This R script shows an example of how MERFISH cell subtypes are annotated using bindSC package.
+- This jupyter notebook page shows an example of how the spatial count matrix of individual MERFISH experiment is generated. Decoded transcripts are first assigned to segmented cells. The generated count matrix is used to perform downstream analysis such as clustering and major cell type annotation.
+
+
+
+
+Subtype annotation by co-embedding with reference scRNA-seq data - bindSC_coembedding_BC.Rmd
+
+- This R script shows an example of how MERFISH cell subtypes are annotated using bindSC package.
 
 
 
