@@ -1,0 +1,223 @@
+from snakemake.utils import min_version
+min_version("7.0")
+
+include: "def.smk"
+include: "config.smk"
+
+rule all:
+  input:
+    "tangramrnamerfish2integrate",
+    "tangramcellprojection2histogram",
+    "tangrammap2plottrainingscores",
+    "tangrammerfishcelltypepred2label",
+    "tangramintegrate2projectgenesfilterbycelltype",
+    "tangramimpute2roundh5ad",
+
+rule tangramrnamerfish2integrate:
+  params:
+    names=bname,
+  output:
+    outdir=directory("tangramrnamerfish2integrate"),
+    done="tangramrnamerfish2integrate/tangram.done",
+  wildcard_constraints:
+    name="[^/]+",
+  threads: workflow.cores
+  run:
+    import itertools
+    from multiprocess import Pool
+
+    def cmd_cpu(*args):
+      name, =args
+      file=name2file[name]
+      outdir=f"{output.outdir}"
+      shell(
+      """
+      {tangramrnamerfish2integrate_cmd} -d "{outdir}" -b "{name}" --cpu -- "{file}"
+      """
+      )
+
+    def cmd_gpu(*args):
+      name, gpu=args
+      file=name2file[name]
+      outdir=f"{output.outdir}"
+      shell(
+      """
+      {tangramrnamerfish2integrate_cmd} -d "{outdir}" -b "{name}" -g "{gpu}" -- "{file}"
+      """
+      )
+
+    names=params.names
+    if config['tangramrnamerfish2integrate']['cpu']: # CPU
+      with Pool(processes=threads) as p:
+        p.starmap(cmd_cpu, zip(names))
+    else: # GPU
+      available_gpus=config['tangramrnamerfish2integrate']['gpu'] # Available GPUs
+      with Pool(processes=len(available_gpus)) as p:
+        p.starmap(cmd_gpu, zip(names, itertools.cycle(available_gpus)))
+    shell("touch {output.done}")
+
+rule tangramcellprojection2histogram:
+  input:
+    indir="tangramrnamerfish2integrate",
+    done="tangramrnamerfish2integrate/tangram.done",
+  params:
+    names=bname,
+  output:
+    outdir=directory("tangramcellprojection2histogram"),
+    done="tangramcellprojection2histogram/histogram.done",
+  wildcard_constraints:
+    name="[^/]+",
+  threads: workflow.cores
+  run:
+    from multiprocess import Pool
+
+    def cmd(*args):
+      name, =args
+      indir=f"{input.indir}"
+      outdir=f"{output.outdir}"
+      file=f"{indir}/{name}_merfish_tangram_ct_pred.csv"
+      shell(
+      """
+      {tangramcellprojection2histogram_cmd} -d "{outdir}" -b "{name}" -- "{file}"
+      """
+      )
+
+    names=params.names
+    with Pool(processes=threads) as p:
+      p.starmap(cmd, zip(names))
+    shell("touch {output.done}")
+
+
+rule tangrammap2plottrainingscores:
+  input:
+    indir="tangramrnamerfish2integrate",
+    done="tangramrnamerfish2integrate/tangram.done",
+  params:
+    names=bname,
+  output:
+    outdir=directory("tangrammap2plottrainingscores"),
+    done="tangrammap2plottrainingscores/score.done",
+  wildcard_constraints:
+    name="[^/]+",
+  threads: workflow.cores
+  run:
+    from multiprocess import Pool
+
+    def cmd(*args):
+      name, =args
+      indir=f"{input.indir}"
+      outdir=f"{output.outdir}"
+      file=f"{indir}/{name}_map.h5ad"
+      shell(
+      """
+      {tangrammap2plottrainingscores_cmd} -d "{outdir}" -b "{name}" -- "{file}"
+      """
+      )
+
+    names=params.names
+    with Pool(processes=threads) as p:
+      p.starmap(cmd, zip(names))
+    shell("touch {output.done}")
+
+rule tangrammerfishcelltypepred2label:
+  input:
+    indir="tangramrnamerfish2integrate",
+    done="tangramrnamerfish2integrate/tangram.done",
+  params:
+    names=bname,
+  output:
+    outdir=directory("tangrammerfishcelltypepred2label"),
+    done="tangrammerfishcelltypepred2label/label.done",
+  wildcard_constraints:
+    name="[^/]+",
+  threads: workflow.cores
+  run:
+    from multiprocess import Pool
+
+    def cmd(*args):
+      name, =args
+      indir=f"{input.indir}"
+      outdir=f"{output.outdir}"
+      file=f"{indir}/{name}_merfish_tangram_ct_pred.csv"
+      shell(
+      """
+      {tangrammerfishcelltypepred2label_cmd} -d "{outdir}" -b "{name}" -- "{file}"
+      """
+      )
+
+    names=params.names
+    with Pool(processes=threads) as p:
+      p.starmap(cmd, zip(names))
+    shell("touch {output.done}")
+
+
+rule tangramintegrate2projectgenesfilterbycelltype:
+  input:
+    indir="tangramrnamerfish2integrate",
+    done="tangramrnamerfish2integrate/tangram.done",
+  params:
+    names=bname,
+  output:
+    outdir=directory("tangramintegrate2projectgenesfilterbycelltype"),
+    done="tangramintegrate2projectgenesfilterbycelltype/label.done",
+  wildcard_constraints:
+    name="[^/]+",
+  threads: workflow.cores
+  run:
+    from multiprocess import Pool
+
+    def cmd(*args):
+      name, =args
+      indir=f"{input.indir}"
+      outdir=f"{output.outdir}"
+      mapfile=f"{indir}/{name}_map.h5ad"
+      rnafile=f"{indir}/{name}_rna.h5ad"
+      rnatype=f"{indir}/{name}_rna_obs.txt.gz"
+      rnalabel=config['tangramintegrate2projectgenesfilterbycelltype']['rnalabel']
+      merfishtype=f"{indir}/{name}_merfish_obs.txt.gz"
+      merfishlabel=config['tangramintegrate2projectgenesfilterbycelltype']['merfishlabel']
+      shell(
+      """
+      {tangramintegrate2projectgenesfilterbycelltype_cmd} -d "{outdir}" -b "{name}" -m "{mapfile}" -r "{rnafile}" -n <(
+        zcat "{rnatype}" | hcut.sh "{rnalabel}" | tail -n +2
+      ) -t <(
+        zcat "{merfishtype}" | hcut.sh "{merfishlabel}" | tail -n +2
+      )
+      """
+      )
+
+    names=params.names
+    with Pool(processes=threads) as p:
+      p.starmap(cmd, zip(names))
+    shell("touch {output.done}")
+
+rule tangramimpute2roundh5ad:
+  input:
+    indir="tangramintegrate2projectgenesfilterbycelltype",
+    done="tangramintegrate2projectgenesfilterbycelltype/label.done",
+  params:
+    names=bname,
+  output:
+    outdir=directory("tangramimpute2roundh5ad"),
+    done="tangramimpute2roundh5ad/impute.done",
+  wildcard_constraints:
+    name="[^/]+",
+  threads: workflow.cores
+  run:
+    from multiprocess import Pool
+
+    def cmd(*args):
+      name, =args
+      indir=f"{input.indir}"
+      outdir=f"{output.outdir}"
+      file=f"{indir}/{name}.h5ad"
+      shell(
+      """
+      {tangramimpute2roundh5ad_cmd} -d "{outdir}" -b "{name}" -- "{file}"
+      """
+      )
+
+    names=params.names
+    with Pool(processes=threads) as p:
+      p.starmap(cmd, zip(names))
+    shell("touch {output.done}")

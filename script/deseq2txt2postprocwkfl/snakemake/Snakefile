@@ -1,0 +1,95 @@
+from snakemake.utils import min_version
+min_version("7.0")
+
+include: "config.smk"
+
+rule all:
+  input:
+    expand(
+      [
+        "deseq2enhancedvolcano/{name}.pdf",
+        "rplothistogram/{name}.pdf",
+        "deseq2enrichgo/{name}",
+        "scrnaenrichgo2dotplot/{name}",
+        "scrnaenrichgo2enrichplot/{name}",
+      ],
+      name=bname,
+    ),
+    expand(
+      [
+        "deseq2pathfindr/{name}",
+      ],
+      name=bname,
+    ) if not config['deseq2pathfindr']['skip'] else [],
+
+rule deseq2enhancedvolcano:
+  input:
+    get_file,
+  output:
+    "deseq2enhancedvolcano/{name}.pdf",
+  wildcard_constraints:
+    name="[^/]+",
+  shell:
+    """
+    {deseq2enhancedvolcano_cmd} -d deseq2enhancedvolcano -b {wildcards.name} -- {input}
+    """
+
+rule rplothistogram:
+  input:
+    get_file,
+  output:
+    "rplothistogram/{name}.pdf",
+  wildcard_constraints:
+    name="[^/]+",
+  shell:
+    """
+    zcat {input} | hcut.sh pvalue | tail -n +2 | {rplothistogram_cmd} -o {output}
+    """
+
+rule deseq2enrichgo:
+  input:
+    get_file,
+  output:
+    directory("deseq2enrichgo/{name}"),
+  wildcard_constraints:
+    name="[^/]+",
+  shell:
+    """
+    {deseq2enrichgo_cmd} -d {output} -- {input}
+    """
+
+rule scrnaenrichgo2dotplot:
+  input:
+    "deseq2enrichgo/{name}",
+  output:
+    directory("scrnaenrichgo2dotplot/{name}"),
+  wildcard_constraints:
+    name="[^/]+",
+  shell:
+    """
+    {scrnaenrichgo2dotplot_cmd} -d {output} -- {input}/*.rds
+    """
+
+rule scrnaenrichgo2enrichplot:
+  input:
+    "deseq2enrichgo/{name}",
+  output:
+    directory("scrnaenrichgo2enrichplot/{name}"),
+  wildcard_constraints:
+    name="[^/]+",
+  shell:
+    """
+    {scrnaenrichgo2enrichplot_cmd} -d {output} -- {input}/*.rds
+    """
+
+rule deseq2pathfindr:
+  input:
+    get_file,
+  output:
+    directory("deseq2pathfindr/{name}"),
+  wildcard_constraints:
+    name="[^/]+",
+  shell:
+    """
+    {deseq2pathfindr_cmd} -d {output} -b {wildcards.name} -- {input}
+    """
