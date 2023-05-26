@@ -1,0 +1,12 @@
+---
+title: "Title"
+author: "Jin Li"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+BiocStyle::html_document:
+toc: false
+---
+
+```{r}
+source('main.R', echo=T)
+```
